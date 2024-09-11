@@ -5,9 +5,7 @@ character: .quad 0
 message_address: .quad 0
 
 .text
-debug_output: .asciz "\nNext Character: '%c'\nAmount of times to be printed: %ld\nNext memory block to visit: %ld\n\n"
 output: .asciz "%c"
-
 
 .include "final.s"
 
@@ -74,22 +72,24 @@ get_values_from_address:
 	movq $0, times
 	movq $0, next
 
-	# Get the least segnificant byte and save it into the next character label
+	# Move the quad we are interested in into rax
 	movq (%rdi), %rax
-	movq $0, %rdx
-	movb %al, %dl
-	movq %rdx, character
 
-	# Get the second least segnificant byte and save it into the no. of times label
-	mov $0, %rdx
-	movb %ah, %dl
-	movq %rdx, times
+	# Get the least significant byte and save it into the next character label
+	movq $0, %rdx 			# Clear rdx
+	movb %al, %dl			# Move least significant byte (next character) into the least significant byte of rdx
+	movq %rdx, character	# Save rdx into my character label
+
+	# Get the second least significant byte and save it into the no. of times label
+	mov $0, %rdx			# Clear rdx
+	movb %ah, %dl			# Move the second least significant byte (no. of times) into the least significant byte of rdx
+	movq %rdx, times		# Save rdx into my times label
 
 	# Get Bytes 3-6 and save them to the next address label
-	movq $0, %rdx
-	shr $16, %rax
-	movl %eax, %edx
-	movq %rdx, next
+	movq $0, %rdx			# Clear rdx
+	shr $16, %rax			# Shift rax by 2 bytes, making the least significant 4 bytes the ones holding the next address
+	movl %eax, %edx			# Move the least significant 4 bytes into rdx
+	movq %rdx, next			# Save rdx into my next label
 
 
 	# epilogue
@@ -103,9 +103,9 @@ get_next_address:
 	movq	%rsp, %rbp		# copy stack pointer value to base pointer
 
 	# Set the next address to go to into rdi by doing ((next * 8) + memory_address)
-	movq %rdi, %rax # Copy the next memory block into rax
-	shlq $3, %rax # multiply it by 8 by shifting left 3
-	addq message_address, %rax # Add the base address to this
+	movq %rdi, %rax 			# Copy the next memory block into rax
+	shlq $3, %rax 				# Multiply it by 8 by shifting left 3
+	addq message_address, %rax	# Add the base address to this
 
 	# epilogue
 	movq	%rbp, %rsp		# clear local variables from stack

@@ -34,9 +34,9 @@ main:
     call printf
 
     # Get inputs with scanf
-    mov $input, %rdi # Move formatted string into first argument
-    lea base, %rsi # Load the first input provided into the 'base' label
-    lea exp, %rdx # Load the second input provided into the 'exp' label
+    mov $input, %rdi    # Move formatted string into first argument
+    lea base, %rsi      # Load the first input provided into the 'base' label
+    lea exp, %rdx       # Load the second input provided into the 'exp' label
     call scanf
 
 
@@ -53,16 +53,16 @@ main:
 
     ### Call the pow subroutine to exponentiate the numbers
 
-    mov base, %rdi # Load the base into the first paramater register
-    mov exp, %rsi # Load the exp into the second paramater register
+    mov base, %rdi      # Load the base into the first paramater register
+    mov exp, %rsi       # Load the exp into the second paramater register
     call pow
 
 
     end:
     ### Print the result
 
-    mov $output, %rdi # Load formatted string into first argument of printf
-    mov %rax, %rsi # Load total (the return of the pow subroutine) into fourth argument of printf
+    mov $output, %rdi   # Load formatted string into first argument of printf
+    mov %rax, %rsi      # Load total (the return of the pow subroutine) into fourth argument of printf
     
     call printf
 
@@ -103,7 +103,7 @@ pow:
     push %rbp
     mov %rsp, %rbp
 
-    mov %rdi, %rax # Load the base into rax for the multiplication;
+    mov %rdi, %rax       # Load the base into rax for the multiplication;
 
 
     ### Check if the exponent is zero and just return 1
@@ -114,24 +114,16 @@ pow:
     ### Loop conditions
     
     powloop:
-    cmp $1, %rsi # while condition, comparing exp to 1
-    jle powend # if condition is not met, jump to the end
+    cmp $1, %rsi        # while condition, comparing exp to 1
+    jle powend          # if condition is not met, jump to the end
 
 
-    ### Multiplication of base and total
-        ### The Total will stay in rax.
+    ### Multiplication of base and total - The Total will stay in rax.
+    
+    mul %rdi            # Multiply base by total
+    dec %rsi            # Decrement the exp
 
-    mul %rdi # Multiply base by total
-
-
-    ### Decrement the exp
-
-    dec %rsi
-
-
-    ### Jump to start of loop
-
-    jmp powloop
+    jmp powloop         # Jump to start of loop
 
 
     powend:
