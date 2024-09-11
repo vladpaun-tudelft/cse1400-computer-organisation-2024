@@ -102,47 +102,43 @@ factorial:
     push %rbp
     mov %rsp, %rbp
 
-    # Always push n
+    ### Base Case Check
+
+    # If n = 0; go to basecase
+    cmpq $0, %rdi
+    je basecase # Jump over all the steps in which you push and multiply
+
+    ### Recursive case
+
+    recursivecase:
+
+    # Push n, 16-align stack, dec n, call factorial
     pushq %rdi
     subq $8, %rsp
 
-
-    # If n is equal to zero, pop it back and replace it with a 1
-    # Also, prepare to exit recursion by starting a running total in %rax  
-    cmpq $0, %rdi
-    je ifcode
-    continue:
-
-    # If n > 0; go to recursive case; else go to basecase
-    cmpq $0, %rdi
-    jg recursivecase
-    jmp basecase
-
-    # We already pushed n onto the stack, so now just decrement it and call the function again
-    recursivecase:
     dec %rdi
     call factorial
 
-    # Once n is 0, multiply the last thing on the stack with rax and leave it on rax, then return
-    # This is why we changed the 0 to a 1 on the stack and why we set rax to 1
-    # This part runs for every instance of the subroutine after the innermost one returns
-    basecase:
+    # When Returning from the function, multiply the last value on the stack into our running total in rax 
 
     ### Multiplication
-    addq $8, %rsp
-    popq %rdi # Pop the last value on the stack into rbx
+    addq $8, %rsp # Keep stack aligned
+    popq %rdi # Pop the last value on the stack into rdi
     mul %rdi # multiply that with the total on rax and leave it there
+    jmp factorialend # jump over the initialization of the total in rax
 
+
+    ### Base Case
+
+    basecase:
+    # When n = 0, only start the total and return
+    movq $1, %rax # start the total into %rax
+
+    factorialend:
     ### Epilogue
     mov %rbp, %rsp
     pop %rbp
 
     ### Return
     ret
-
-    ifcode:
-    # If n = 0
-    movq $1, -8(%rbp)
-    movq $1, %rax # start the total into %rax
-    jmp continue
 
