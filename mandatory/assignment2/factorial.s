@@ -59,6 +59,10 @@ main:
     call printf
 
 
+    ### Epilogue
+    mov %rbp, %rsp
+    pop %rbp
+
     ### Exit program
 
     mov $0, %rdi # exit code
@@ -69,6 +73,10 @@ errorcode:
 
     mov $error, %rdi
     call printf
+
+    ### Epilogue
+    mov %rbp, %rsp
+    pop %rbp
 
     mov $1, %rdi
     call exit
