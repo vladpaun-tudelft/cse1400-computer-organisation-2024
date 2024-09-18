@@ -2,7 +2,7 @@ objects = build/main.o build/brainfuck.o build/read_file.o
 .PHONY: clean
 
 brainfuck: $(objects)
-	$(CC) -no-pie -o "$@" $^
+	$(CC) -no-pie -g -o "$@" $^
 
 build:
 	mkdir build
