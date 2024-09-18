@@ -1,6 +1,6 @@
 .global brainfuck
 
-format_str: .asciz "We should be executing the following code:\n%s"
+format_str: .asciz "We should be executing the following code:\n%s\n"
 
 # Your brainfuck subroutine will receive one argument:
 # a zero termianted string containing the code to execute.
