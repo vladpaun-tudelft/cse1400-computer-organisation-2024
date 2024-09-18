@@ -47,7 +47,7 @@ check_validity:
 	cmpq $123, %rax			# If it's '{', push it
 	je push_case
 
-	# Cases for cosed brackets
+	# Cases for closed brackets
 	cmpq $41, %rax			# If it's ')', pop the last pushed thing and compare
 	je pop_case
 
