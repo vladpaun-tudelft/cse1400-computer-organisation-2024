@@ -1,15 +1,20 @@
 .global brainfuck
 
 format_str: .asciz "We should be executing the following code:\n%s\n\n"
-output: .asciz "%c"
+output: .asciz "%ld"
+input: .asciz "%ld"
 end: .asciz "\n\n"
 
+reg12: .quad 0
+reg13: .quad 0
+
 jumptable:
-	.quad case0Add
+
+    .quad case0Add
 	.quad case1Scan
 	.quad case2Sub
 	.quad case3Print
-	#13 invalid cases:
+    #13 invalid cases:
 		.quad caseInvalid
 		.quad caseInvalid
 		.quad caseInvalid
@@ -23,10 +28,10 @@ jumptable:
 		.quad caseInvalid
 		.quad caseInvalid
 		.quad caseInvalid
-	.quad case17Left
+    .quad case17Left
 	.quad caseInvalid
 	.quad case19Right
-	#another 28 invalid cases:
+    #another 28 invalid cases:
 		.quad caseInvalid
 		.quad caseInvalid
 		.quad caseInvalid
@@ -55,62 +60,90 @@ jumptable:
 		.quad caseInvalid
 		.quad caseInvalid
 		.quad caseInvalid
-	.quad case48OpenLoop
+    .quad case48OpenLoop
 	.quad caseInvalid
 	.quad case50CloseLoop
+
 cases:
-	case0Add:
-		movq $0, %rax
-		movb (%r12), %al
-		inc %rax
-		movb %al, (%r12)
+    case0Add:
+        incb (%r12)
+        jmp instruction_loop
+    case1Scan:
+		movq $input, %rdi
+		movq %r12, %rsi
+		call scanf
+        jmp instruction_loop
+    case2Sub:
+        decb (%r12)
+        jmp instruction_loop
+    case3Print:
 
-		jmp instruction_done
-
-	case1Scan:
-		jmp instruction_done
-
-	case2Sub:
-		movq $0, %rax
-		movb (%r12), %al
-		dec %rax
-		movb %al, (%r12)
-
-		jmp instruction_done
-
-	case3Print:
-
-		movq $0, %rax
-		movb (%r12), %al
-		mov %rax, %rsi
-		mov $output, %rdi
-		call printf
-
-		jmp instruction_done
-
-	case17Left:
-		
-		addq $1, %r12
-		jmp instruction_done
-
-	case19Right:
-		
-		
-		subq $1, %r12
-		jmp instruction_done
-
-	case48OpenLoop:
-		
-	
-		jmp instruction_done
-
+        movq $0, %rax
+        movb (%r12), %al
+        movq %rax, %rsi
+        movq $output, %rdi
+        call printf
+        
+        jmp instruction_loop
+    case17Left:
+        inc %r12
+        jmp instruction_loop
+    case19Right:
+        dec %r12
+        jmp instruction_loop
+    case48OpenLoop:
+		cmpb $0, (%r12)
+		je skip
+		jmp instruction_loop
 	case50CloseLoop:
-		
-	
-		jmp instruction_done
-
+		cmpb $0, (%r12)
+		jne go_back
+		jmp instruction_loop
 	caseInvalid:
-		jmp instruction_done
+		jmp instruction_loop
+
+	
+skip:
+	movq $1, %r8
+	skip_loop:
+		cmpq $0, %r8
+		je instruction_loop
+
+		incq %r13
+		cmpb $91, (%r13)
+		je ifcode1
+		cmpb $93, (%r13)
+		je elifcode1
+		endif1:
+		jmp skip_loop
+
+go_back:
+	movq $-1, %r8
+	go_back_loop:
+		cmpq $0, %r8
+		je instruction_loop
+
+		decq %r13
+		cmpb $91, (%r13)
+		je ifcode2
+		je elifcode2
+		endif2:
+		jmp go_back_loop
+
+ifcode1:
+	incq %r8
+	jmp endif1
+elifcode1:
+	decq %r8
+	jmp endif1
+
+ifcode2:
+	incq %r8
+	jmp endif2
+elifcode2:
+	decq %r8
+	jmp endif2
+
 
 # Your brainfuck subroutine will receive one argument:
 # a zero termianted string containing the code to execute.
@@ -118,78 +151,71 @@ brainfuck:
 	pushq %rbp
 	movq %rsp, %rbp
 
-	# Save instruction pointer into rbx
-	movq %rdi, %rbx
+    # Save callee-saved registers into memory
+    # movq %r12, reg12
+    # movq %r13, reg13
 
-	# Print the initial message
+    # Save instruction pointer into r13
+    movq %rdi, %r13
+
+    # Print the initial message
 	movq %rdi, %rsi
 	movq $format_str, %rdi
 	call printf
 	movq $0, %rax
 
-	pushq $0
-	pushq $0
+    pushq $0
+    pushq $0
 
-	movq %rsp, %r12 	# Tape pointer will be r12
-	jmp make_space	# Move rsp down 30000 bytes
-	make_space_end:
+    # Save our tape pointer into %r12
+    movq %rsp, %r12
 
-	subq $1, %rbx	# decrement this bc we are incrementing it in the beginning of loop
+    # Create the 30000 byte tape
+        movq $0, %r8
+        loop1:
+            cmpq $3750, %r8
+            je loop1_end
 
-	insruction_loop:
-		# If tape pointer has reached rsp, allocate more tape
+            pushq $0
 
-		# Increment instruction pointer
-		addq $1, %rbx
+            inc %r8
+        jmp loop1
+        loop1_end:
+    
 
-		# If null character, end loop
-		cmpb $0, (%rbx)
-		je instruction_loop_end
+    subq $1, %r13
+    instruction_loop:
+    # Increment instruction pointer
+    addq $1, %r13
 
-		# Get the character into rax and subtract 43 from it
-		movq $0, %rax
-		movb (%rbx), %al
-		subq $43, %rax
+    # If nnull cgharacter, end
+    cmpb $0, (%r13)
+    je instruction_loop_end
 
-		# Call the different cases for instructions
-		shlq $3, %rax
-		movq jumptable(%rax), %rax
-		jmp *%rax
+    # Move current instruction into rax
+    movq $0, %rax
+    movb (%r13), %al
 
-		instruction_done:
-		jmp insruction_loop
-	instruction_loop_end:
+    # Treat the instruction in excess 43
+    subq $43, %rax
 
-	movq $end, %rdi
+    # Call the different cases for instructions using a jumptable
+	shlq $3, %rax
+	movq jumptable(%rax), %rax
+	jmp *%rax
+
+
+    instruction_loop_end:
+
+    movq $end, %rdi
 	call printf
+
+    # Reload callee-saved registers from memory
+    # movq reg12, %r12
+    # movq reg13, %r13
 
 	movq %rbp, %rsp
 	popq %rbp
 	ret
 
 
-
-/*extend_tape:
-	# counter
-	movq $0, %r9
-	loop:
-		cmpq $16, %r9
-		je extend_tape_end
-
-		subq $1, %rsp
-		movb $0, (%rsp)
-
-		inc %r9
-	jmp loop */
-
-
-make_space:
-	movq $0, %r9
-	loop1:
-		cmpq $3750, %r9
-		je make_space_end
-
-		pushq $0
-
-		inc %r9
-	jmp loop1
