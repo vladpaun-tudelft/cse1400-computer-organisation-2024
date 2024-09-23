@@ -1,12 +1,6 @@
 .global brainfuck
 
-format_str: .asciz "We should be executing the following code:\n%s\n\n"
-output: .asciz "%c"
-input: .asciz "%c"
-end: .asciz "\n\n"
-
-reg12: .quad 
-reg13: .quad 
+put: .asciz "%c"
 
 jumptable:
 
@@ -69,7 +63,7 @@ cases:
         incb (%r12)
         jmp instruction_loop
     case1Scan:
-		movq $input, %rdi
+		movq $put, %rdi
 		movq %r12, %rsi
 		call scanf
         jmp instruction_loop
@@ -81,7 +75,7 @@ cases:
         movq $0, %rax
         movb (%r12), %al
         movq %rax, %rsi
-        movq $output, %rdi
+        movq $put, %rdi
         call printf
         
         jmp instruction_loop
@@ -159,12 +153,6 @@ brainfuck:
     # Save instruction pointer into r13
     movq %rdi, %r13
 
-    # Print the initial message
-	movq %rdi, %rsi
-	movq $format_str, %rdi
-	call printf
-	movq $0, %rax
-
     pushq $0
     pushq $0
 
@@ -207,9 +195,6 @@ brainfuck:
 
 
     instruction_loop_end:
-
-    movq $end, %rdi
-	call printf
 
     # Reload callee-saved registers from stack
     movq -8(%rbp), %r12
