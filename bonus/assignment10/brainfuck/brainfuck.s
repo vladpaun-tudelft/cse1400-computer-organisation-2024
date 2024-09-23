@@ -114,7 +114,7 @@ skip:
 		je ifcode1
 		cmpb $93, (%r13)
 		je elifcode1
-		endif1:
+		
 		jmp skip_loop
 
 go_back:
@@ -128,22 +128,22 @@ go_back:
 		je ifcode2
 		cmpb $93, (%r13)
 		je elifcode2
-		endif2:
+		
 		jmp go_back_loop
 
 ifcode1:
 	incq %r8
-	jmp endif1
+	jmp skip_loop
 elifcode1:
 	decq %r8
-	jmp endif1
+	jmp skip_loop
 
 ifcode2:
 	incq %r8
-	jmp endif2
+	jmp go_back_loop
 elifcode2:
 	decq %r8
-	jmp endif2
+	jmp go_back_loop
 
 
 # Your brainfuck subroutine will receive one argument:
