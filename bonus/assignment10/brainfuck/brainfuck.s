@@ -1,12 +1,12 @@
 .global brainfuck
 
 format_str: .asciz "We should be executing the following code:\n%s\n\n"
-output: .asciz "%ld"
-input: .asciz "%ld"
+output: .asciz "%c"
+input: .asciz "%c"
 end: .asciz "\n\n"
 
-reg12: .quad 0
-reg13: .quad 0
+reg12: .quad 
+reg13: .quad 
 
 jumptable:
 
@@ -126,6 +126,7 @@ go_back:
 		decq %r13
 		cmpb $91, (%r13)
 		je ifcode2
+		cmpb $93, (%r13)
 		je elifcode2
 		endif2:
 		jmp go_back_loop
@@ -151,9 +152,9 @@ brainfuck:
 	pushq %rbp
 	movq %rsp, %rbp
 
-    # Save callee-saved registers into memory
-    # movq %r12, reg12
-    # movq %r13, reg13
+    # Save callee-saved registers into stack
+    pushq %r12
+	pushq %r13
 
     # Save instruction pointer into r13
     movq %rdi, %r13
@@ -210,9 +211,9 @@ brainfuck:
     movq $end, %rdi
 	call printf
 
-    # Reload callee-saved registers from memory
-    # movq reg12, %r12
-    # movq reg13, %r13
+    # Reload callee-saved registers from stack
+    movq -8(%rbp), %r12
+    movq -16(%rbp), %r13
 
 	movq %rbp, %rsp
 	popq %rbp
