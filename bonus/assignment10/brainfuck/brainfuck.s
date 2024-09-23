@@ -101,49 +101,49 @@ cases:
 		jmp instruction_loop
 	caseInvalid:
 		jmp instruction_loop
-
 	
-skip:
-	movq $1, %r8
-	skip_loop:
-		cmpq $0, %r8
-		je instruction_loop
+looping:
+	skip:
+		movq $1, %r8
+		skip_loop:
+			cmpq $0, %r8
+			je instruction_loop
 
-		incq %r13
-		cmpb $91, (%r13)
-		je ifcode1
-		cmpb $93, (%r13)
-		je elifcode1
-		
+			incq %r13
+			cmpb $91, (%r13)
+			je ifcode1
+			cmpb $93, (%r13)
+			je elifcode1
+			
+			jmp skip_loop
+
+	go_back:
+		movq $-1, %r8
+		go_back_loop:
+			cmpq $0, %r8
+			je instruction_loop
+
+			decq %r13
+			cmpb $91, (%r13)
+			je ifcode2
+			cmpb $93, (%r13)
+			je elifcode2
+			
+			jmp go_back_loop
+
+	ifcode1:
+		incq %r8
+		jmp skip_loop
+	elifcode1:
+		decq %r8
 		jmp skip_loop
 
-go_back:
-	movq $-1, %r8
-	go_back_loop:
-		cmpq $0, %r8
-		je instruction_loop
-
-		decq %r13
-		cmpb $91, (%r13)
-		je ifcode2
-		cmpb $93, (%r13)
-		je elifcode2
-		
+	ifcode2:
+		incq %r8
 		jmp go_back_loop
-
-ifcode1:
-	incq %r8
-	jmp skip_loop
-elifcode1:
-	decq %r8
-	jmp skip_loop
-
-ifcode2:
-	incq %r8
-	jmp go_back_loop
-elifcode2:
-	decq %r8
-	jmp go_back_loop
+	elifcode2:
+		decq %r8
+		jmp go_back_loop
 
 
 # Your brainfuck subroutine will receive one argument:
