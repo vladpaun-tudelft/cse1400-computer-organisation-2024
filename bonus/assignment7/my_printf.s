@@ -1,5 +1,6 @@
 .section .data
-str: .asciz "I am %u years old, You are %u\n"
+str: .asciz "Athul says: %s. But then again, he has %u bitches, that is %d bitches in unsigned integers. also, he is 100%% cooked. I like '%r'\n"
+str2: .asciz "fuck you"
 percent: .asciz "%"
 
 buffer: .space 20
@@ -19,8 +20,9 @@ main:
     mov %rsp, %rbp
 
     movq $str, %rdi
-    movq $200960, %rsi
+    movq $str2, %rsi
     movq $5, %rdx
+    movq $-5, %rcx
     call my_printf
 
 
@@ -43,12 +45,17 @@ my_printf:
     movq %rdi, str_address  # Save string address
 
     # Push all the params to stack in reverse order
-    subq $8, %rsp
+    
     pushq %r9
+    
     pushq %r8
+    
     pushq %rcx
+    
     pushq %rdx
+    
     pushq %rsi
+    
 
 
     # Counter for concatenation
@@ -103,6 +110,21 @@ my_printf:
     ret
 
 specifier:
+    cmpb $37, 1(%rdi)
+    je specifier_cont
+    cmpb $100, 1(%rdi)
+    je specifier_cont
+    cmpb $115, 1(%rdi)
+    je specifier_cont
+    cmpb $117, 1(%rdi)
+    je specifier_cont
+
+    inc %rdi
+    inc %rax
+    
+    jmp l1
+
+    specifier_cont:
     # Place a null character at '%', end the current string
     movb $0, (%rdi)
 
@@ -123,6 +145,17 @@ specifier:
     jmp end_l1
 
 start_again:
+
+    # Clear the number buffer
+    movq $19, %r10
+    l4:
+        movb $0, buffer(%r10)
+        decq %r10
+
+        cmpq $0, %r10
+        jne l4
+
+
     # Deal with specifier
     cmpb $37, specifier_value
     je print_percent
@@ -158,45 +191,25 @@ print_percent:
 
 print_signed_int:
 
-    popq %rax
+    movq (%rsp), %r11
 
-    movq $buffer, %r10
-    addq $19, %r10
+    shr $63, %r11
+    cmpq $1, %r11
+    jne print_unsigned_int
 
-    movq $10, %rdi
-    l3:
-        movq $0, %rdx
-        div %rdi
-        addb $48, %dl
-        movb %dl, (%r10)
-        decq %r10
-
-        cmpq $0, %rax
-        jne l3
-    l3_end:
+    movb $45, buffer
 
     
+    popq %r11
 
-
-        # Syscall number (1 for write)
-		movq $1, %rax
-
-		# File descriptor (1 for stdout)
-		movq $1, %rdi
-
-		# Address of the character to print
-		movq $buffer, %rsi
-
-		# Length (1 byte)
-		movq $20, %rdx
-
-		# Make the syscall
-		syscall
-
-    jmp start_again_cont
+    subq $1, %r11
+    xor $-1, %r11
+    
+    pushq %r11
+    
 
 print_unsigned_int:
-
+    
     popq %rax
 
     movq $buffer, %r10
@@ -213,9 +226,6 @@ print_unsigned_int:
         cmpq $0, %rax
         jne l3
     l3_end:
-
-    
-
 
         # Syscall number (1 for write)
 		movq $1, %rax
@@ -234,3 +244,26 @@ print_unsigned_int:
 
     jmp start_again_cont
 print_string:
+    # Address of the string to print
+    
+    popq %rsi
+
+    movq %rsi, %r10
+    movq $0, %rdx
+    l5:
+        cmpb $0, (%r10)
+        je l5_end
+
+        inc %rdx
+        inc %r10
+        jmp l5
+
+    l5_end:
+
+    # Syscall number (1 for write)
+    movq $1, %rax
+    # File descriptor (1 for stdout)
+    movq $1, %rdi
+    # Make the syscall
+    syscall
+    jmp start_again_cont
