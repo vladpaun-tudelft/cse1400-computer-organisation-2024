@@ -1,6 +1,6 @@
 .section .data
-file1: .asciz "abca\n11\n123"
-file2: .asciz "12345\n11\n456"
+file1: .asciz "abc\nABC"
+file2: .asciz "ABC\n\nABC"
 
 null_flag: .byte 0
 
@@ -139,6 +139,44 @@ diff:
 
 
         string_loop:
+            # Deal with the '-i' flag here
+            # Check the flag
+            cmpq $1, %rdx
+            jne continue
+                cmpb $'A', (%r10)
+                jl continue
+                    cmpb $'Z', (%r10)
+                    jg continue
+                        addq $32, (%r10)
+            continue:
+
+            cmpq $1, %rdx
+            jne continue3
+                cmpb $'A', (%r11)
+                jl continue3
+                    cmpb $'Z', (%r11)
+                    jg continue3
+                        addq $32, (%r11)
+            continue3:
+
+            # Deal with the '-B' flag here
+            cmpq $1, %rcx
+            jne continue4
+                cmpb $'\n', (%r10)
+                jne continue4
+                    incq %r10
+                    jmp string_loop
+            continue4:
+            
+            cmpq $1, %rcx
+            jne continue5
+                cmpb $'\n', (%r11)
+                jne continue5
+                    incq %r11
+                    jmp string_loop
+            continue5:
+
+
             # Compare the 2 characters and set flag accordingly
             movq $0, %rax
             movb (%r10), %al
@@ -175,6 +213,8 @@ diff:
     ret
 
 print_stuff:
+    pushq %rdx
+    pushq %rcx
     # Go through line 1, find the first \n, replace it with a null character, give the initial address of it to printf and save the first char of the next line in r10
     movq %rdi, %r10
     l1:
@@ -224,6 +264,9 @@ print_stuff:
 
     popq %r11
     popq %r10
+
+    popq %rcx
+    popq %rdx
     
     jmp lines_loop
 
