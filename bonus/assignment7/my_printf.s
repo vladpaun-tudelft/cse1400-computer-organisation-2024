@@ -1,7 +1,10 @@
 .section .data
-str: .asciz "Athul says: %s. But then again, he has %u bitches, that is %d bitches in unsigned integers. also, he is 100%% cooked. I like '%r'\n"
-str2: .asciz "fuck you"
+str: .asciz "aufgalidbfi %u, %s, %d, %%, %r"
 percent: .asciz "%"
+minus: .asciz "-"
+
+str2: .asciz "test"
+
 
 buffer: .space 20
 
@@ -20,9 +23,10 @@ main:
     mov %rsp, %rbp
 
     movq $str, %rdi
-    movq $str2, %rsi
-    movq $5, %rdx
-    movq $-5, %rcx
+    movq $5, %rsi
+    movq $str2, %rdx
+    movq $-7, %rcx
+
     call my_printf
 
 
@@ -40,13 +44,15 @@ my_printf:
 
     ### Prologue
     push %rbp
-    mov %rsp, %rbp
+    movq %rsp, %rbp
+
 
     movq %rdi, str_address  # Save string address
 
     # Push all the params to stack in reverse order
     
     pushq %r9
+    movq $0, %r9
     
     pushq %r8
     
@@ -62,6 +68,13 @@ my_printf:
     movq $0, %r8             # This will act as a flag to restart printing
 
     my_printf_loop:
+
+    cmpq $5, %r9
+    jne kys
+
+    addq $16, %rsp
+    kys:
+
     # Initialize counter (for length)
     movq str_address, %rdi
     movq $0, %rax
@@ -104,7 +117,7 @@ my_printf:
 
 
     ### Epilogue
-    mov %rbp, %rsp
+    movq %rbp, %rsp
     pop %rbp
 
     ret
@@ -121,7 +134,7 @@ specifier:
 
     inc %rdi
     inc %rax
-    
+
     jmp l1
 
     specifier_cont:
@@ -134,8 +147,8 @@ specifier:
     incq %rdi
 
     # Current character is the specifier, save it to a label
-    movb (%rdi), %bl
-    movb %bl, specifier_value
+    movb (%rdi), %r10b
+    movb %r10b, specifier_value
 
 
     incq %rdi
@@ -197,7 +210,17 @@ print_signed_int:
     cmpq $1, %r11
     jne print_unsigned_int
 
-    movb $45, buffer
+    # Length to print (in %rdx)
+    movq $1, %rdx
+
+    # Address of the character to print (from str_address)
+    movq $minus, %rsi
+    # Syscall number (1 for write)
+    movq $1, %rax
+    # File descriptor (1 for stdout)
+    movq $1, %rdi
+    # Make the syscall
+    syscall
 
     
     popq %r11
@@ -209,20 +232,36 @@ print_signed_int:
     
 
 print_unsigned_int:
-    
+    # Get the number into rax
     popq %rax
+    incq %r9
 
+    # Get the last byte of my buffer so i can start populating it
     movq $buffer, %r10
     addq $19, %r10
 
+    # Divisor so i can do n / 10 and n % 10
     movq $10, %rdi
+
+    # Counter for number of bytes to print
+    movq $0, %r11
+
     l3:
+        # Do n / 10 and n % 10
         movq $0, %rdx
         div %rdi
+        
+        # Add n%10 + 48 to the last byte of the buffer
         addb $48, %dl
         movb %dl, (%r10)
+
+        # Move back one byte in the buffer
         decq %r10
 
+        #Increment lnegth by 1 byte
+        incq %r11
+
+        # Check if the number is 0
         cmpq $0, %rax
         jne l3
     l3_end:
@@ -233,11 +272,12 @@ print_unsigned_int:
 		# File descriptor (1 for stdout)
 		movq $1, %rdi
 
-		# Address of the character to print
-		movq $buffer, %rsi
+		# Address of the character to print uis r10 + 1
+        incq %r10
+		movq %r10, %rsi
 
-		# Length (1 byte)
-		movq $20, %rdx
+		# Length (r11 )
+		movq %r11, %rdx
 
 		# Make the syscall
 		syscall
@@ -247,6 +287,7 @@ print_string:
     # Address of the string to print
     
     popq %rsi
+    incq %r9
 
     movq %rsi, %r10
     movq $0, %rdx
