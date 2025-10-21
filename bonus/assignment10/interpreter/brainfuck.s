@@ -3,11 +3,54 @@
 put: .asciz "%c"
 
 jumptable:
-
-    .quad case0Add
-	.quad case1Scan
-	.quad case2Sub
-	.quad case3Print
+	#43 invalid cases:
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+    .quad case43Add
+	.quad case44Scan
+	.quad case45Sub
+	.quad case46Print
     #13 invalid cases:
 		.quad caseInvalid
 		.quad caseInvalid
@@ -22,9 +65,9 @@ jumptable:
 		.quad caseInvalid
 		.quad caseInvalid
 		.quad caseInvalid
-    .quad case17Left
+    .quad case60Left
 	.quad caseInvalid
-	.quad case19Right
+	.quad case62Right
     #another 28 invalid cases:
 		.quad caseInvalid
 		.quad caseInvalid
@@ -54,42 +97,92 @@ jumptable:
 		.quad caseInvalid
 		.quad caseInvalid
 		.quad caseInvalid
-    .quad case48OpenLoop
+    .quad case91OpenLoop
 	.quad caseInvalid
-	.quad case50CloseLoop
+	.quad case93CloseLoop
+	#28 invalid cases:
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid
+		.quad caseInvalid		
 
 cases:
-    case0Add:
+    case43Add:
         incb (%r12)
         jmp instruction_loop
-    case1Scan:
-		movq $put, %rdi
-		movq %r12, %rsi
-		call scanf
+    case44Scan:
+		# Syscall number (0 for read)
+		mov $0, %rax
+
+		# File descriptor (0 for stdin)
+		mov $0, %rdi
+
+		# Address to store the byte (for example, %r12)
+		mov %r12, %rsi
+
+		# Read 1 byte
+		mov $1, %rdx
+
+		# Make the syscall
+		syscall
+
         jmp instruction_loop
-    case2Sub:
+    case45Sub:
         decb (%r12)
         jmp instruction_loop
-    case3Print:
+    case46Print:
 
-        movq $0, %rax
-        movb (%r12), %al
-        movq %rax, %rsi
-        movq $put, %rdi
-        call printf
+		# Syscall number (1 for write)
+		movq $1, %rax
+
+		# File descriptor (1 for stdout)
+		movq $1, %rdi
+
+		# Address of the character to print
+		movq %r12, %rsi
+
+		# Length (1 byte)
+		movq $1, %rdx
+
+		# Make the syscall
+		syscall
         
         jmp instruction_loop
-    case17Left:
+    case60Left:
         inc %r12
         jmp instruction_loop
-    case19Right:
+    case62Right:
         dec %r12
         jmp instruction_loop
-    case48OpenLoop:
+    case91OpenLoop:
 		cmpb $0, (%r12)
 		je skip
 		jmp instruction_loop
-	case50CloseLoop:
+	case93CloseLoop:
 		cmpb $0, (%r12)
 		jne go_back
 		jmp instruction_loop
@@ -177,16 +270,15 @@ brainfuck:
     # Increment instruction pointer
     addq $1, %r13
 
-    # If nnull cgharacter, end
+    # If null cgharacter, end
     cmpb $0, (%r13)
     je instruction_loop_end
+
 
     # Move current instruction into rax
     movq $0, %rax
     movb (%r13), %al
 
-    # Treat the instruction in excess 43
-    subq $43, %rax
 
     # Call the different cases for instructions using a jumptable
 	shlq $3, %rax
