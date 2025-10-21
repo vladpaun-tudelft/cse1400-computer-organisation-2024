@@ -1,0 +1,26 @@
+# build outputs
+build/
+*.o
+*.so
+*.out
+*.exe
+*.elf
+
+# compiled binaries
+mandatory/assignment1/power
+mandatory/assignment2/factorial
+mandatory/assignment3/decoder
+
+bonus/assignment4/decoder
+bonus/assignment5/ti1406-sha1/sha1
+bonus/assignment6/check_validity
+bonus/assignment7/printf
+bonus/assignment8/diff
+
+bonus/assignment10/brainfuck/brainfuck
+bonus/assignment10/interpreter/brainfuck
+bonus/assignment10/compiler/bf_compiler
+
+# OS junk
+.DS_Store
+Thumbs.db
